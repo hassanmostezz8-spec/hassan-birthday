@@ -944,60 +944,159 @@ if (musicButtonForEffect) {
 </script>
 
 
-</body>
-<div class="sparkles" aria-hidden="true">
-    <span>✦</span>
-/* تحسين شكل الموقع على الموبايل */
-@media (max-width: 600px) {
-    body {
-        overflow-x: hidden;
-    }
 
-    h1 {
-        font-size: 26px;
-        line-height: 1.5;
-    }
+<!-- قسم رسائل الزوار -->
+<section class="visitor-messages" id="visitorMessages">
+  <div class="visitor-heading">💌 رسائل الزوار</div>
+  <p class="visitor-intro">اكتب رسالة تهنئة وشارك حسن فرحته 🎉</p>
 
-    p {
-        font-size: 15px;
-        line-height: 1.8;
-    }
+  <form id="visitorMessageForm">
+    <label for="visitorName">اسمك</label>
+    <input id="visitorName" name="name" type="text" maxlength="50"
+           placeholder="اكتب اسمك" required>
 
-    .gallery {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 18px;
-        padding: 12px;
-    }
+    <label for="visitorMessage">رسالتك</label>
+    <textarea id="visitorMessage" name="message" maxlength="1000"
+              rows="5" placeholder="اكتب رسالتك بكل حب..." required></textarea>
 
-    .gallery img {
-        width: 100%;
-        max-width: 100%;
-        height: auto;
-    }
+    <button type="submit" id="sendVisitorMessage">إرسال الرسالة ✨</button>
+    <p id="visitorMessageStatus" role="status" aria-live="polite"></p>
+  </form>
+  <p class="visitor-private-note">🔒 رسالتك تُرسل بشكل خاص، ولا تظهر للزوار الآخرين.</p>
+</section>
 
-    button {
-        max-width: 90%;
-        font-size: 15px;
-        padding: 12px 20px;
-    }
-
-    .lightbox img {
-        max-width: 92%;
-        max-height: 80vh;
-        object-fit: contain;
-    }
+<style>
+.visitor-messages {
+  width: min(92%, 850px);
+  margin: 55px auto;
+  padding: 30px 24px;
+  color: #fff;
+  text-align: right;
+  direction: rtl;
+  background: linear-gradient(145deg, rgba(35,25,55,.96), rgba(8,8,18,.97));
+  border: 1px solid rgba(212,175,55,.7);
+  border-radius: 24px;
+  box-shadow: 0 0 28px rgba(160,90,255,.18), 0 0 18px rgba(212,175,55,.12);
+  position: relative;
+  z-index: 2;
 }
+.visitor-heading {
+  color: #f0c86b;
+  font-size: clamp(25px, 4vw, 34px);
+  font-weight: 900;
+  text-align: center;
+  text-shadow: 0 0 12px rgba(212,175,55,.5);
+}
+.visitor-intro, .visitor-private-note {
+  text-align: center;
+  line-height: 1.8;
+  color: #e8d9f5;
+}
+.visitor-messages label {
+  display: block;
+  margin: 18px 0 8px;
+  color: #f5d27a;
+  font-weight: bold;
+}
+.visitor-messages input, .visitor-messages textarea {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  color: white;
+  background: rgba(255,255,255,.09);
+  border: 1px solid rgba(190,130,255,.75);
+  border-radius: 13px;
+  font: inherit;
+  outline: none;
+}
+.visitor-messages input:focus, .visitor-messages textarea:focus {
+  border-color: #f5d27a;
+  box-shadow: 0 0 12px rgba(190,130,255,.35);
+}
+.visitor-messages textarea { resize: vertical; }
+#sendVisitorMessage {
+  display: block;
+  margin: 20px auto 8px;
+  padding: 13px 28px;
+  border: 1px solid #ffe5a0;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #8e2de2, #4a00e0);
+  color: white;
+  font: inherit;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(142,45,226,.35);
+}
+#sendVisitorMessage:disabled { opacity: .6; cursor: wait; }
+#visitorMessageStatus { min-height: 24px; text-align: center; font-weight: bold; }
+@media (max-width: 600px) {
+  .visitor-messages { padding: 23px 15px; }
+}
+</style>
 
-    <span>✧</span>
-    <span>✦</span>
-    <span>✧</span>
-    <span>✦</span>
-    <span>✧</span>
-    <span>✦</span>
-    <span>✧</span>
-    <span>✦</span>
-    <span>✧</span>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const birthdayFirebaseConfig = {
+  apiKey: "AIzaSyAowyy2IIk3QKP4xmkskeuwIn6yv8BmPcU",
+  authDomain: "hassan-birthday.firebaseapp.com",
+  projectId: "hassan-birthday",
+  storageBucket: "hassan-birthday.firebasestorage.app",
+  messagingSenderId: "56971121871",
+  appId: "1:56971121871:web:137a0c961707a43fed53ba",
+  measurementId: "G-MQ5EVEM3JR"
+};
+if (!firebase.apps.length) firebase.initializeApp(birthdayFirebaseConfig);
+const birthdayDb = firebase.firestore();
+
+const visitorForm = document.getElementById("visitorMessageForm");
+if (visitorForm) {
+  visitorForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
+    const nameInput = document.getElementById("visitorName");
+    const messageInput = document.getElementById("visitorMessage");
+    const sendButton = document.getElementById("sendVisitorMessage");
+    const status = document.getElementById("visitorMessageStatus");
+    const name = nameInput.value.trim();
+    const message = messageInput.value.trim();
+
+    if (!name || !message) {
+      status.textContent = "من فضلك اكتب اسمك ورسالتك.";
+      return;
+    }
+
+    sendButton.disabled = true;
+    status.textContent = "جاري إرسال رسالتك...";
+    try {
+      await birthdayDb.collection("messages").add({
+        name: name,
+        message: message,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      visitorForm.reset();
+      status.textContent = "وصلت رسالتك بنجاح! شكراً لمشاركتك ❤️";
+    } catch (error) {
+      console.error("Message submission failed:", error);
+      status.textContent = "حصلت مشكلة في الإرسال. جرّب مرة تانية بعد قليل.";
+    } finally {
+      sendButton.disabled = false;
+    }
+  });
+}
+</script>
+
+<div class="sparkles" aria-hidden="true">
+    <span>✦</span><span>✧</span><span>✦</span><span>✧</span><span>✦</span>
+    <span>✧</span><span>✦</span><span>✧</span><span>✦</span><span>✧</span>
 </div>
+<style>
+@media (max-width: 600px) {
+  body { overflow-x: hidden; }
+  .gallery { display: grid; grid-template-columns: 1fr; gap: 18px; padding: 12px; }
+  .gallery img { width: 100%; max-width: 100%; height: auto; }
+  .lightbox img { max-width: 92%; max-height: 80vh; object-fit: contain; }
+}
+</style>
 
+</body>
 </html>
